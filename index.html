@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MealMatch - Healthy Recipe Search & Planning</title>
+    <link rel="icon" type="image/x-icon" href="images/icons/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="images/logos/logo.jpg" alt="MealMatch Logo" class="logo-img">
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link active">Search</a>
+                <a href="planner.html" class="nav-link">Planner</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <section class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Discover Healthy Recipes</h1>
+                    <p class="hero-subtitle">Find delicious meals that fit your dietary needs and busy lifestyle</p>
+                </div>
+                <div class="hero-image">
+                    <img src="images/recipes/best-served.webp" alt="Healthy cooking" class="hero-img">
+                </div>
+            </div>
+        </section>
+
+        <div class="container">
+            <section class="search-section">
+                <div class="search-container">
+                    <h2 class="search-title">Find Your Perfect Recipe</h2>
+                    <div class="search-form">
+                        <label for="searchInput" class="sr-only">Search recipes</label>
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search by keyword or ingredients..." aria-label="Search recipes">
+                        <button id="searchBtn" class="search-btn" aria-label="Search">Search</button>
+                    </div>
+                    
+                    <div class="filter-chips" role="group" aria-label="Filter recipes by diet type">
+                        <button class="chip active" data-diet="all" aria-pressed="true">All</button>
+                        <button class="chip" data-diet="vegan" aria-pressed="false">Vegan</button>
+                        <button class="chip" data-diet="vegetarian" aria-pressed="false">Vegetarian</button>
+                        <button class="chip" data-diet="keto" aria-pressed="false">Keto</button>
+                        <button class="chip" data-diet="gluten-free" aria-pressed="false">Gluten-Free</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="recipes-section">
+                <div class="recipes-header">
+                    <h3 class="recipes-title">Recipes</h3>
+                    <div class="view-toggle" role="group" aria-label="View recipes as">
+                        <button class="view-btn active" data-view="grid" aria-pressed="true">Grid</button>
+                        <button class="view-btn" data-view="list" aria-pressed="false">List</button>
+                    </div>
+                </div>
+                
+                <div id="recipesContainer" class="recipes-grid">
+                    <div class="loading-placeholder">
+                        <p>Start searching for delicious recipes</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 MealMatch. Making healthy eating easier.</p>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="search.js"></script>
+    <script src="favorites.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

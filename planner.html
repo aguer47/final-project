@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planner - MealMatch</title>
+    <link rel="icon" type="image/x-icon" href="images/icons/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="images/logos/logo.jpg" alt="MealMatch Logo" class="logo-img">
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Search</a>
+                <a href="planner.html" class="nav-link active">Planner</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Planner Header -->
+            <section class="planner-header">
+                <h2 class="planner-title">Weekly Meal Planner</h2>
+                <div class="planner-actions">
+                    <button id="generateListBtn" class="btn btn-secondary">Generate Shopping List</button>
+                    <button id="clearPlannerBtn" class="btn btn-outline">Clear Week</button>
+                </div>
+            </section>
+
+            <!-- Weekly Plan Table -->
+            <section class="weekly-plan">
+                <div class="plan-table">
+                    <div class="table-header">
+                        <div class="day-cell">Day</div>
+                        <div class="meal-cell">Breakfast</div>
+                        <div class="meal-cell">Lunch</div>
+                        <div class="meal-cell">Dinner</div>
+                    </div>
+                    
+                    <div class="table-row" data-day="monday">
+                        <div class="day-cell">Monday</div>
+                        <div class="meal-cell" data-meal="breakfast">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="lunch">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="dinner">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-row" data-day="tuesday">
+                        <div class="day-cell">Tuesday</div>
+                        <div class="meal-cell" data-meal="breakfast">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="lunch">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="dinner">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-row" data-day="wednesday">
+                        <div class="day-cell">Wednesday</div>
+                        <div class="meal-cell" data-meal="breakfast">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="lunch">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="dinner">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-row" data-day="thursday">
+                        <div class="day-cell">Thursday</div>
+                        <div class="meal-cell" data-meal="breakfast">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="lunch">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="dinner">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-row" data-day="friday">
+                        <div class="day-cell">Friday</div>
+                        <div class="meal-cell" data-meal="breakfast">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="lunch">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="dinner">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-row" data-day="saturday">
+                        <div class="day-cell">Saturday</div>
+                        <div class="meal-cell" data-meal="breakfast">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="lunch">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="dinner">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-row" data-day="sunday">
+                        <div class="day-cell">Sunday</div>
+                        <div class="meal-cell" data-meal="breakfast">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="lunch">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                        <div class="meal-cell" data-meal="dinner">
+                            <div class="meal-slot">
+                                <span class="meal-empty">+ Add meal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Shopping List Section -->
+            <section id="shoppingListSection" class="shopping-list-section" style="display: none;">
+                <h3 class="section-title">Shopping List</h3>
+                <div id="shoppingList" class="shopping-list">
+                    <!-- Shopping list items will be dynamically inserted here -->
+                </div>
+                <button id="printListBtn" class="btn btn-outline">Print List</button>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 MealMatch. Making healthy eating easier.</p>
+        </div>
+    </footer>
+
+    <!-- Recipe Selection Modal -->
+    <div id="recipeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select a Recipe</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="modalSearchInput" class="search-input" placeholder="Search recipes...">
+                <div id="modalRecipesList" class="modal-recipes">
+                    <!-- Recipe options will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="api.js"></script>
+    <script src="favorites.js"></script>
+    <script src="planner.js"></script>
+    <script src="shoppingList.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

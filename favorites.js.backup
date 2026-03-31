@@ -1,0 +1,578 @@
+
+//  Final Project -  Majok Aguer
+// This file handles local storage management for favorite recipes
+
+class FavoritesManager {
+    constructor() {
+        this.storageKey = 'mealmatch_favorites';
+        this.favorites = this.loadFavorites();
+        this.maxFavorites = 100; // Limit to prevent storage issues
+        
+        this.init();
+    }
+
+    init() {
+        console.log('Initializing Favorites Manager...');
+        
+        // Only setup if we're on a page that has favorites elements
+        if (document.querySelector('.favorites-container') || document.getElementById('favoritesContainer')) {
+            this.setupFavoritesDisplay();
+        }
+        
+        this.setupImportExport();
+        this.setupFavoritesActions();
+        this.setupFavoritesTabs();
+        this.setupStorageSync();
+    }
+
+    // Core Favorites Management
+    loadFavorites() {
+        try {
+            const stored = localStorage.getItem(this.storageKey);
+            return stored ? JSON.parse(stored) : {};
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+            return {};
+        }
+    }
+
+    saveFavorites() {
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(this.favorites));
+            this.notifyStorageChange();
+        } catch (error) {
+            console.error('Error saving favorites:', error);
+            
+            if (error.name === 'QuotaExceededError') {
+                this.handleStorageQuotaExceeded();
+            }
+        }
+    }
+
+    addFavorite(recipeId, recipeData = null) {
+        if (!recipeId) return false;
+
+        // Check if already favorite
+        if (this.favorites[recipeId]) {
+            return false;
+        }
+
+        
+        if (Object.keys(this.favorites).length >= this.maxFavorites) {
+            console.warn('Maximum favorites limit reached');
+            return false;
+        }
+
+        // Add to favorites with timestamp
+        this.favorites[recipeId] = {
+            id: recipeId,
+            addedAt: Date.now(),
+            ...recipeData
+        };
+
+        this.saveFavorites();
+        this.updateFavoriteButtons();
+        this.showNotification('Recipe added to favorites!');
+        
+        return true;
+    }
+
+    removeFavorite(recipeId) {
+        if (!recipeId || !this.favorites[recipeId]) {
+            return false;
+        }
+
+        delete this.favorites[recipeId];
+        this.saveFavorites();
+        this.updateFavoriteButtons();
+        this.showNotification('Recipe removed from favorites');
+        
+        return true;
+    }
+
+    isFavorite(recipeId) {
+        return !!this.favorites[recipeId];
+    }
+
+    getFavorite(recipeId) {
+        return this.favorites[recipeId] || null;
+    }
+
+    getAllFavorites() {
+        return this.favorites;
+    }
+
+    getFavoritesArray() {
+        return Object.values(this.favorites).sort((a, b) => b.addedAt - a.addedAt);
+    }
+
+    getFavoritesCount() {
+        return Object.keys(this.favorites).length;
+    }
+
+    clearAllFavorites() {
+        if (confirm('Are you sure you want to clear all favorites? This cannot be undone.')) {
+            this.favorites = {};
+            this.saveFavorites();
+            this.updateFavoriteButtons();
+            this.showNotification('All favorites cleared');
+            return true;
+        }
+        return false;
+    }
+
+    // UI Management
+    updateFavoriteButtons() {
+        const favoriteBtns = document.querySelectorAll('.favorite-btn');
+        
+        favoriteBtns.forEach(btn => {
+            const recipeId = btn.dataset.recipeId;
+            if (recipeId && this.isFavorite(recipeId)) {
+                btn.classList.add('active');
+                btn.textContent = '❤️';
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = '🤍';
+            }
+        });
+    }
+
+    setupFavoritesDisplay() {
+        // Check if we're on a page that should display favorites
+        const favoritesContainer = document.getElementById('favoritesContainer');
+        if (favoritesContainer) {
+            this.displayFavorites(favoritesContainer);
+        }
+
+        // Setup favorites tabs if they exist
+        this.setupFavoritesTabs();
+    }
+
+    displayFavorites(container) {
+        const favorites = this.getFavoritesArray();
+        
+        if (favorites.length === 0) {
+            container.innerHTML = `
+                <div class="empty-favorites">
+                    <h3>No favorites yet</h3>
+                    <p>Start adding recipes to your favorites to see them here!</p>
+                    <a href="index.html" class="btn btn-primary">Search Recipes</a>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="favorites-header">
+                <h3>Your Favorites (${favorites.length})</h3>
+                <div class="favorites-actions">
+                    <button id="exportFavoritesBtn" class="btn btn-outline">Export</button>
+                    <button id="clearFavoritesBtn" class="btn btn-outline">Clear All</button>
+                </div>
+            </div>
+            <div class="favorites-grid">
+                ${favorites.map(favorite => this.createFavoriteCard(favorite)).join('')}
+            </div>
+        `;
+
+        // Setup favorite card interactions
+        this.setupFavoriteCardInteractions(container);
+        
+        // Setup action buttons
+        this.setupFavoritesActions(container);
+    }
+
+    createFavoriteCard(favorite) {
+        const addedDate = new Date(favorite.addedAt).toLocaleDateString();
+        
+        return `
+            <div class="favorite-card" data-recipe-id="${favorite.id}">
+                <img src="${favorite.image || 'https://via.placeholder.com/300x200'}" alt="${favorite.title}" class="favorite-image">
+                <div class="favorite-content">
+                    <h4 class="favorite-title">${favorite.title}</h4>
+                    <div class="favorite-info">
+                        <span>⏱️ ${this.formatTime(favorite.readyInMinutes || 30)}</span>
+                        <span>👥 ${favorite.servings || 4}</span>
+                    </div>
+                    <div class="favorite-meta">
+                        <span class="added-date">Added ${addedDate}</span>
+                        <div class="favorite-actions">
+                            <button class="view-recipe-btn" data-recipe-id="${favorite.id}">View</button>
+                            <button class="remove-favorite-btn" data-recipe-id="${favorite.id}">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    setupFavoriteCardInteractions(container) {
+        // View recipe buttons
+        container.querySelectorAll('.view-recipe-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const recipeId = e.target.dataset.recipeId;
+                this.viewRecipe(recipeId);
+            });
+        });
+
+        // Remove favorite buttons
+        container.querySelectorAll('.remove-favorite-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const recipeId = e.target.dataset.recipeId;
+                if (confirm('Remove this recipe from favorites?')) {
+                    this.removeFavorite(recipeId);
+                    this.displayFavorites(container);
+                }
+            });
+        });
+
+        // Favorite card clicks
+        container.querySelectorAll('.favorite-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                
+                if (e.target.classList.contains('view-recipe-btn') || 
+                    e.target.classList.contains('remove-favorite-btn')) {
+                    return;
+                }
+                
+                const recipeId = card.dataset.recipeId;
+                this.viewRecipe(recipeId);
+
+    setupFavoritesActions(container = document) {
+        try {
+            if (!container || !container.querySelector) return;
+            
+            const exportBtn = container.querySelector('#exportFavoritesBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => this.exportFavorites());
+            }
+
+            const clearBtn = container.querySelector('#clearFavoritesBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    if (this.clearAllFavorites()) {
+                        this.showNotification('All favorites cleared', 'success');
+                        this.displayFavorites();
+                    }
+                });
+            }
+        } catch (error) {
+            console.log('Favorites actions setup skipped - no favorites elements found');
+        }
+    }
+        
+        if (tabBtns.length > 0 && tabContents.length > 0) {
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetTab = e.target.dataset.tab;
+                    
+                    // Update active button
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // Show corresponding content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${targetTab}Content`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+    }
+
+    // Import/Export Functionality
+    exportFavorites() {
+        const favorites = this.getFavoritesArray();
+        const exportData = {
+            version: '1.0',
+            exportedAt: new Date().toISOString(),
+            favorites: favorites
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `mealmatch-favorites-${new Date().toISOString().split('T')[0]}.json`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        this.showNotification('Favorites exported successfully!');
+    }
+
+    importFavorites(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    // Validate import data
+                    if (!importData.favorites || !Array.isArray(importData.favorites)) {
+                        throw new Error('Invalid import file format');
+                    }
+                    
+                    // Import favorites
+                    let importedCount = 0;
+                    importData.favorites.forEach(favorite => {
+                        if (favorite.id && !this.isFavorite(favorite.id)) {
+                            this.addFavorite(favorite.id, favorite);
+                            importedCount++;
+                        }
+                    });
+                    
+                    this.showNotification(`Successfully imported ${importedCount} favorites!`);
+                    resolve(importedCount);
+                } catch (error) {
+                    console.error('Import error:', error);
+                    this.showNotification('Failed to import favorites. Please check the file format.');
+                    reject(error);
+                }
+            };
+            
+            reader.onerror = () => {
+                reject(new Error('Failed to read file'));
+            };
+            
+            reader.readAsText(file);
+        });
+    }
+
+    setupImportExport() {
+        // Setup file input for import
+        const importInput = document.getElementById('importFavoritesInput');
+        if (importInput) {
+            importInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    this.importFavorites(file)
+                        .then(() => {
+                            // Refresh favorites display
+                            const container = document.getElementById('favoritesContainer');
+                            if (container) {
+                                this.displayFavorites(container);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Import failed:', error);
+                        });
+                }
+            });
+        }
+    }
+
+    
+    setupStorageSync() {
+        
+        window.addEventListener('storage', (e) => {
+            if (e.key === this.storageKey && e.newValue) {
+                try {
+                    this.favorites = JSON.parse(e.newValue);
+                    this.updateFavoriteButtons();
+                    
+                    // Refresh favorites display if it exists
+                    const container = document.getElementById('favoritesContainer');
+                    if (container) {
+                        this.displayFavorites(container);
+                    }
+                } catch (error) {
+                    console.error('Error syncing favorites:', error);
+                }
+            }
+        });
+    }
+
+    notifyStorageChange() {
+       
+        const event = new StorageEvent('storage', {
+            key: this.storageKey,
+            newValue: JSON.stringify(this.favorites)
+        });
+        window.dispatchEvent(event);
+    }
+
+    // Error Handling
+    handleStorageQuotaExceeded() {
+        console.warn('Storage quota exceeded, cleaning up old favorites');
+        
+        // Remove oldest favorites to make space
+        const favorites = this.getFavoritesArray();
+        const keepCount = Math.max(10, this.maxFavorites - 20); // Keep at least 10
+        
+        if (favorites.length > keepCount) {
+            const toKeep = favorites.slice(0, keepCount);
+            this.favorites = {};
+            
+            toKeep.forEach(favorite => {
+                this.favorites[favorite.id] = favorite;
+            });
+            
+            this.saveFavorites();
+            this.showNotification('Some old favorites were removed to free up space');
+        }
+    }
+
+    // Recipe Actions
+    viewRecipe(recipeId) {
+        window.location.href = `recipe.html?id=${recipeId}`;
+    }
+
+  
+    showNotification(message, type = 'success') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        // Style the notification
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            z-index: 10000;
+            max-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Utility Methods
+    formatTime(minutes) {
+        if (minutes < 60) {
+            return `${minutes} mins`;
+        } else {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+        }
+    }
+
+    // Search within favorites
+    searchFavorites(query) {
+        const favorites = this.getFavoritesArray();
+        
+        if (!query) {
+            return favorites;
+        }
+        
+        const lowerQuery = query.toLowerCase();
+        return favorites.filter(favorite => 
+            favorite.title.toLowerCase().includes(lowerQuery) ||
+            (favorite.ingredients && favorite.ingredients.some(ing => 
+                ing.toLowerCase().includes(lowerQuery)
+            ))
+        );
+    }
+
+    // Filter favorites by diet
+    filterFavoritesByDiet(diet) {
+        const favorites = this.getFavoritesArray();
+        
+        if (!diet || diet === 'all') {
+            return favorites;
+        }
+        
+        return favorites.filter(favorite => 
+            favorite.dietLabels && favorite.dietLabels.some(label => 
+                label.toLowerCase() === diet.toLowerCase()
+            )
+        );
+    }
+
+    // Get favorites statistics
+    getFavoritesStats() {
+        const favorites = this.getFavoritesArray();
+        
+        const stats = {
+            total: favorites.length,
+            diets: {},
+            avgCookTime: 0,
+            avgServings: 0
+        };
+        
+        if (favorites.length === 0) {
+            return stats;
+        }
+        
+        let totalCookTime = 0;
+        let totalServings = 0;
+        
+        favorites.forEach(favorite => {
+            // Count diet types
+            if (favorite.dietLabels) {
+                favorite.dietLabels.forEach(diet => {
+                    stats.diets[diet] = (stats.diets[diet] || 0) + 1;
+                });
+            }
+            
+            // Sum cooking times and servings
+            totalCookTime += favorite.readyInMinutes || 30;
+            totalServings += favorite.servings || 4;
+        });
+        
+        stats.avgCookTime = Math.round(totalCookTime / favorites.length);
+        stats.avgServings = Math.round(totalServings / favorites.length);
+        
+        return stats;
+    }
+}
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FavoritesManager;
+}
+
+// Add CSS animations for notifications
+const notificationStyles = `
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+`;
+
+
+if (!document.querySelector('#notification-styles')) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'notification-styles';
+    styleSheet.textContent = notificationStyles;
+    document.head.appendChild(styleSheet);
+}

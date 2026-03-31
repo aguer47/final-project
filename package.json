@@ -1,0 +1,19 @@
+{
+  "name": "mealmatch",
+  "version": "1.0.0",
+  "description": "A modern web application for healthy recipe search and meal planning",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8000 -o",
+    "dev": "npx live-server --port=8000 --open=index.html",
+    "live": "npx live-server --port=8001 --open=index.html",
+    "python": "python -m http.server 8000"
+  },
+  "keywords": ["recipe", "meal-planning", "healthy-eating", "web-app"],
+  "author": "MealMatch Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  }
+}
