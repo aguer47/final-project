@@ -4,7 +4,7 @@
   "description": "A modern web application for healthy recipe search and meal planning",
   "main": "index.html",
   "scripts": {
-    "start": "npx http-server -p 8000 -o",
+    "start": "npx http-server dist -p 8000 -o",
     "dev": "npx live-server --port=8000 --open=index.html",
     "live": "npx live-server --port=8001 --open=index.html",
     "python": "python -m http.server 8000",
