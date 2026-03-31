@@ -8,7 +8,7 @@
     "dev": "npx live-server --port=8000 --open=index.html",
     "live": "npx live-server --port=8001 --open=index.html",
     "python": "python -m http.server 8000",
-    "build": "echo 'Build completed - Static files ready'"
+    "build": "mkdir -p dist && cp -r *.html *.css *.js images/ dist/ && echo 'Build completed - Static files ready in dist/'"
   },
   "keywords": ["recipe", "meal-planning", "healthy-eating", "web-app"],
   "author": "MealMatch Team",
