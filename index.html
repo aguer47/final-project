@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MealMatch - Healthy Recipe Search & Planning</title>
+    <link rel="stylesheet" href="/src/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1 class="logo-text">MealMatch</h1>
+            </div>
+            <nav class="nav">
+                <a href="/" class="nav-link active">Search</a>
+                <a href="/planner.html" class="nav-link">Planner</a>
+                <a href="/favorites.html" class="nav-link">Favorites</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">Find Your Perfect Recipe</h1>
+                    <p class="hero-subtitle">Search thousands of healthy recipes and plan your meals</p>
+                    
+                    <div class="search-container">
+                        <div class="search-wrapper">
+                            <input
+                                type="text"
+                                id="searchInput"
+                                class="search-input"
+                                placeholder="Search by keyword or ingredients..."
+                                aria-label="Search recipes"
+                            >
+                            <button id="searchBtn" class="search-btn" aria-label="Search">
+                                <span class="search-icon">Search</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="filters-section">
+            <div class="container">
+                <div class="filter-chips">
+                    <button class="chip" data-diet="vegetarian">Vegetarian</button>
+                    <button class="chip" data-diet="vegan">Vegan</button>
+                    <button class="chip" data-diet="ketogenic">Keto</button>
+                    <button class="chip" data-diet="gluten-free">Gluten-Free</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="recipes-section">
+            <div class="container">
+                <div class="recipes-header">
+                    <h3 class="recipes-title">Recipes</h3>
+                    <div class="view-toggle" role="group" aria-label="View recipes as">
+                        <button class="view-btn active" data-view="grid">Grid</button>
+                        <button class="view-btn" data-view="list">List</button>
+                    </div>
+                </div>
+                <div id="recipesContainer" class="recipes-grid">
+                    <!-- Recipe cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 MealMatch. Making healthy eating easier.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

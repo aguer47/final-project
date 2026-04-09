@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planner - MealMatch</title>
+    <link rel="stylesheet" href="/src/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1 class="logo-text">MealMatch</h1>
+            </div>
+            <nav class="nav">
+                <a href="/" class="nav-link">Search</a>
+                <a href="/planner.html" class="nav-link active">Planner</a>
+                <a href="/favorites.html" class="nav-link">Favorites</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Planner Header -->
+            <section class="planner-header">
+                <h2 class="planner-title">Weekly Meal Planner</h2>
+                <div class="planner-actions">
+                    <button id="generateListBtn" class="btn btn-secondary">Generate Shopping List</button>
+                    <button id="clearPlannerBtn" class="btn btn-outline">Clear Planner</button>
+                    <button id="exportPlannerBtn" class="btn btn-outline">Export Planner</button>
+                </div>
+            </section>
+
+            <!-- Weekly Plan Table -->
+            <section class="weekly-plan">
+                <div class="plan-table">
+                    <div class="table-header">
+                        <div class="day-cell">Day</div>
+                        <div class="meal-cell">Breakfast</div>
+                        <div class="meal-cell">Lunch</div>
+                        <div class="meal-cell">Dinner</div>
+                    </div>
+                    <!-- Meal slots will be dynamically generated -->
+                </div>
+            </section>
+
+            <!-- Shopping List Section -->
+            <section id="shoppingListSection" class="shopping-list-section" style="display: none;">
+                <h3>Generated Shopping List</h3>
+                <div id="shoppingListContainer" class="shopping-list-container">
+                    <!-- Shopping list items will be dynamically inserted -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 MealMatch. Making healthy eating easier.</p>
+        </div>
+    </footer>
+
+    <!-- Recipe Selection Modal -->
+    <div id="recipeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select a Recipe</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="modalSearchInput" class="search-input" placeholder="Search recipes...">
+                <div id="modalRecipesList" class="modal-recipes">
+                    <!-- Recipe options will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
