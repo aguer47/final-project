@@ -1,3 +1,5 @@
+// Majok Aguer - mealmatch
+
 class APIManager {
     constructor() {
         this.spoonacularApiKey = this.getApiKey('spoonacular');
@@ -19,7 +21,6 @@ class APIManager {
     getApiKey(service) {
         const key = localStorage.getItem(`mealmatch_${service}_key`);
         
-        // If key exists and is not a placeholder, use it
         if (key && key !== 'YOUR_SPOONACULAR_API_KEY' && key !== 'YOUR_EDAMAM_APP_ID' && key !== 'YOUR_EDAMAM_APP_KEY') {
             return key;
         }

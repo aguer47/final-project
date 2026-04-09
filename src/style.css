@@ -1,4 +1,5 @@
-/* CSS Variables */
+/* Majok Aguer - mealmatch */
+
 :root {
   --primary-green: #2e7d32;
   --primary-orange: #f57c00;
@@ -143,7 +144,7 @@ body {
 }
 
 .search-btn {
-  background: var(--primary-orange);
+  background: var(--primary-green);
   color: var(--primary-white);
   border: none;
   padding: 1rem 2rem;
@@ -154,12 +155,19 @@ body {
 }
 
 .search-btn:hover {
-  background: #e67e00;
+  background: #1a5e1a;
 }
 
 /* Filters Section */
 .filters-section {
   padding: 2rem 0;
+}
+
+.filters-title {
+  color: var(--text-dark);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
 .filter-chips {

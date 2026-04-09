@@ -1,3 +1,5 @@
+// Majok Aguer - mealmatch
+
 import { StorageManager, NotificationManager } from './utils.js';
 import { APIManager } from './api.js';
 

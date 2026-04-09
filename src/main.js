@@ -1,17 +1,16 @@
-// Import all modules
+// Majok Aguer - mealmatch
+
 import './utils.js';
 import './api.js';
 import './search.js';
 import './favorites.js';
 import './planner.js';
 
-// Import classes for use
 import { SearchManager } from './search.js';
 import { PlannerManager } from './planner.js';
 import { APIManager } from './api.js';
 import { NotificationManager, StorageManager, ExportManager } from './utils.js';
 
-// Main application class
 class MealMatchApp {
     constructor() {
         this.currentPage = this.detectPage();

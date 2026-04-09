@@ -1,16 +1,16 @@
+// Majok Aguer - mealmatch
+
 import { APIManager } from './api.js';
 import { NotificationManager, StorageManager } from './utils.js';
 
 class SearchManager {
     constructor() {
-        // Search state variables
         this.currentQuery = '';
         this.currentPage = 1;
         this.resultsPerPage = 12;
         this.searchHistory = [];
         this.apiManager = new APIManager();
         
-        // Initialize the search functionality
         this.init();
     }
 

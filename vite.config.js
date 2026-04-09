@@ -1,3 +1,5 @@
+// Majok Aguer - mealmatch
+
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 

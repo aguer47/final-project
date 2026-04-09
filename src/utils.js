@@ -1,4 +1,4 @@
-// Shared utility functions for MealMatch app
+// Majok Aguer - mealmatch
 
 class NotificationManager {
     static show(message, type = 'success') {
