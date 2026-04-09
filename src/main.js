@@ -4,7 +4,6 @@ import './api.js';
 import './search.js';
 import './favorites.js';
 import './planner.js';
-import './shoppingList.js';
 
 // Import classes for use
 import { SearchManager } from './search.js';
