@@ -303,8 +303,8 @@ class MealMatchApp {
                     favoriteBtn.classList.add('favorited');
                 }
 
-                viewBtn.addEventListener('click', () => {
-                    window.location.href = `recipe.html?id=${recipe.idMeal}`;
+                viewBtn.addEventListener('click', async () => {
+                    await this.navigateToRecipe(recipe.idMeal);
                 });
 
                 container.appendChild(div);
@@ -313,6 +313,34 @@ class MealMatchApp {
             container.innerHTML = '<div class="error">Error loading recipes</div>';
             console.error(error);
             this.showNotification('Failed to load recipes');
+        }
+    }
+
+    async navigateToRecipe(recipeId) {
+        if (!recipeId) {
+            this.showNotification('Invalid recipe ID');
+            return;
+        }
+
+        // Show loading state
+        this.showNotification('Loading recipe...');
+
+        try {
+            // Validate recipe exists before navigation
+            const recipe = await getRecipeById(recipeId);
+            
+            if (!recipe) {
+                this.showNotification('Recipe not found. Showing similar recipes...');
+                // Fallback: redirect to search with a common term
+                window.location.href = `/`;
+                return;
+            }
+
+            // Recipe exists, navigate to recipe page
+            window.location.href = `recipe.html?id=${recipeId}`;
+        } catch (error) {
+            console.error('Error validating recipe:', error);
+            this.showNotification('Unable to load recipe. Please try again.');
         }
     }
 

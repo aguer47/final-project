@@ -123,8 +123,34 @@ class FavoritesManager {
         }
     }
 
-    viewRecipe(recipeId) {
-        window.location.href = `recipe.html?id=${recipeId}`;
+    async viewRecipe(recipeId) {
+        if (!recipeId) {
+            NotificationManager.show('Invalid recipe ID');
+            return;
+        }
+
+        // Show loading state
+        NotificationManager.show('Loading recipe...');
+
+        try {
+            // Import and use the validation function
+            const { getRecipeById } = await import('./api.js');
+            const recipe = await getRecipeById(recipeId);
+            
+            if (!recipe) {
+                NotificationManager.show('Recipe not found. Redirecting to search...');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+                return;
+            }
+
+            // Recipe exists, navigate to recipe page
+            window.location.href = `recipe.html?id=${recipeId}`;
+        } catch (error) {
+            console.error('Error validating recipe:', error);
+            NotificationManager.show('Unable to load recipe. Please try again.');
+        }
     }
 
     // Public methods for external access
