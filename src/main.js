@@ -340,7 +340,17 @@ class MealMatchApp {
             window.location.href = `recipe.html?id=${recipeId}`;
         } catch (error) {
             console.error('Error validating recipe:', error);
-            this.showNotification('Unable to load recipe. Please try again.');
+            
+            // Provide specific error messages
+            let errorMessage = 'Unable to load recipe. Please try again.';
+            
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                errorMessage = 'Network connection issue. Please check your internet connection.';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage = 'Recipe service is temporarily unavailable.';
+            }
+            
+            this.showNotification(errorMessage);
         }
     }
 
@@ -423,7 +433,17 @@ class MealMatchApp {
             this.renderRecipeDetail(recipe);
         } catch (error) {
             console.error('Error loading recipe:', error);
-            this.showRecipeError('Failed to load recipe details. Please try again later.');
+            
+            // Provide specific error messages based on error type
+            let errorMessage = 'Failed to load recipe details. Please try again later.';
+            
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                errorMessage = 'Network connection issue. Please check your internet connection and try again.';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage = 'Recipe service is temporarily unavailable. Please try again later.';
+            }
+            
+            this.showRecipeError(errorMessage);
         }
     }
 
