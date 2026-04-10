@@ -1,12 +1,10 @@
 // Majok Aguer - mealmatch
 
-import { StorageManager, NotificationManager } from './utils.js';
-import { APIManager } from './api.js';
+import { searchRecipes } from './api.js';
 
 class PlannerManager {
     constructor() {
-        this.mealPlan = StorageManager.load('mealmatch_meal_plan', {});
-        this.apiManager = new APIManager();
+        this.mealPlan = JSON.parse(localStorage.getItem('mealmatch_meal_plan') || '{}');
         this.daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         this.mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
         
@@ -56,8 +54,7 @@ class PlannerManager {
                 <div class="meal-slot ${isFilled ? 'filled' : ''}" 
                      data-day="${day}" 
                      data-meal="${meal}" 
-                     data-meal-id="${mealId}"
-                     onclick="window.plannerManager.openRecipeSelector('${day}', '${meal}')">
+                     data-meal-id="${mealId}">
                     ${isFilled ? existingMeal.title : '+ Add Meal'}
                 </div>
             </div>
@@ -99,16 +96,20 @@ class PlannerManager {
 
     setupAddButtons() {
         // Setup click handlers for meal slots
-        document.querySelectorAll('.meal-slot').forEach(slot => {
-            slot.addEventListener('click', (e) => {
-                const day = e.target.dataset.day;
-                const meal = e.target.dataset.meal;
-                this.openRecipeSelector(day, meal);
+        setTimeout(() => {
+            document.querySelectorAll('.meal-slot').forEach(slot => {
+                slot.addEventListener('click', (e) => {
+                    const day = e.target.dataset.day;
+                    const meal = e.target.dataset.meal;
+                    console.log('Meal slot clicked:', day, meal);
+                    this.openRecipeSelector(day, meal);
+                });
             });
-        });
+        }, 100);
     }
 
     openRecipeSelector(day, meal) {
+        console.log('Opening recipe selector for:', day, meal);
         this.currentDay = day;
         this.currentMeal = meal;
         this.showRecipeModal();
@@ -157,7 +158,7 @@ class PlannerManager {
     async loadModalRecipes() {
         try {
             // Load favorites first
-            const favorites = StorageManager.load('mealmatch_favorites', {});
+            const favorites = JSON.parse(localStorage.getItem('mealmatch_favorites') || '{}');
             const favoriteRecipes = Object.values(favorites);
             
             if (favoriteRecipes.length > 0) {
@@ -174,11 +175,10 @@ class PlannerManager {
 
     async loadPopularRecipes() {
         try {
-            const results = await this.apiManager.searchRecipes({
-                query: 'popular',
-                number: 6
-            });
-            this.displayModalRecipes(results.results);
+            console.log('Loading popular recipes with search term: chicken');
+            const results = await searchRecipes('chicken');
+            console.log('Popular recipes results:', results);
+            this.displayModalRecipes(results.slice(0, 6));
         } catch (error) {
             console.error('Error loading popular recipes:', error);
             this.displayModalRecipes([]);
@@ -189,28 +189,39 @@ class PlannerManager {
         const searchInput = document.getElementById('modalSearchInput');
         const query = searchInput ? searchInput.value.trim() : '';
         
+        console.log('Planner search query:', query);
+        
         if (!query) {
-            NotificationManager.show('Please enter a search term', 'error');
+            alert('Please enter a search term');
             return;
         }
 
         try {
-            const results = await this.apiManager.searchRecipes({
-                query: query,
-                number: 6
-            });
-            this.displayModalRecipes(results.results);
+            console.log('Calling searchRecipes with query:', query);
+            const results = await searchRecipes(query);
+            console.log('Search results:', results);
+            
+            if (!results || results.length === 0) {
+                this.displayModalRecipes([]);
+                return;
+            }
+            
+            this.displayModalRecipes(results.slice(0, 6));
         } catch (error) {
             console.error('Error searching recipes:', error);
-            NotificationManager.show('Failed to search recipes', 'error');
+            alert('Failed to search recipes: ' + error.message);
         }
     }
 
     displayModalRecipes(recipes) {
         const container = document.getElementById('modalRecipes');
+        console.log('displayModalRecipes called with:', recipes);
+        console.log('Container found:', !!container);
+        
         if (!container) return;
 
         if (!recipes || recipes.length === 0) {
+            console.log('No recipes to display');
             container.innerHTML = `
                 <div class="loading-placeholder">
                     <p>No recipes found. Try searching for something else.</p>
@@ -219,17 +230,32 @@ class PlannerManager {
             return;
         }
 
-        const recipesHTML = recipes.map(recipe => `
-            <div class="recipe-option" onclick="window.plannerManager.selectRecipe(${recipe.id}, '${recipe.title}', '${recipe.image}')">
-                <img src="${recipe.image || 'https://via.placeholder.com/100x100?text=Recipe'}" alt="${recipe.title}">
-                <div class="recipe-info">
-                    <h4>${recipe.title}</h4>
-                    <p>Ready in ${recipe.readyInMinutes || 30} mins</p>
+        console.log('Processing', recipes.length, 'recipes');
+        const recipesHTML = recipes.map(recipe => {
+            console.log('Processing recipe:', recipe);
+            return `
+                <div class="recipe-option" data-recipe-id="${recipe.idMeal}" data-recipe-title="${recipe.strMeal.replace(/'/g, "\\'")}" data-recipe-image="${recipe.strMealThumb || ''}">
+                    <img src="${recipe.strMealThumb || 'https://via.placeholder.com/100x100?text=Recipe'}" alt="${recipe.strMeal}">
+                    <div class="recipe-info">
+                        <h4>${recipe.strMeal}</h4>
+                        <p>Ready in 30 mins</p>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
+        console.log('Setting container HTML with', recipes.length, 'recipes');
         container.innerHTML = recipesHTML;
+
+        // Add click event listeners to recipe options
+        container.querySelectorAll('.recipe-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const recipeId = option.dataset.recipeId;
+                const recipeTitle = option.dataset.recipeTitle;
+                const recipeImage = option.dataset.recipeImage;
+                this.selectRecipe(recipeId, recipeTitle, recipeImage);
+            });
+        });
     }
 
     selectRecipe(recipeId, recipeTitle, recipeImage) {
@@ -246,7 +272,7 @@ class PlannerManager {
         };
 
         // Save to storage
-        StorageManager.save('mealmatch_meal_plan', this.mealPlan);
+        localStorage.setItem('mealmatch_meal_plan', JSON.stringify(this.mealPlan));
 
         // Update UI
         const slot = document.querySelector(`[data-meal-id="${mealId}"]`);
@@ -271,9 +297,9 @@ class PlannerManager {
     clearPlan() {
         if (confirm('Are you sure you want to clear the entire meal plan?')) {
             this.mealPlan = {};
-            StorageManager.save('mealmatch_meal_plan', this.mealPlan);
+            localStorage.setItem('mealmatch_meal_plan', JSON.stringify(this.mealPlan));
             this.displayPlannerData();
-            NotificationManager.show('Meal plan cleared');
+            alert('Meal plan cleared');
         }
     }
 
@@ -292,9 +318,9 @@ class PlannerManager {
         });
 
         // Save shopping list
-        StorageManager.save('mealmatch_shopping_list', ingredientList);
+        localStorage.setItem('mealmatch_shopping_list', JSON.stringify(ingredientList));
         
-        NotificationManager.show('Shopping list generated!');
+        alert('Shopping list generated!');
         
         // Show shopping list section
         const shoppingSection = document.getElementById('shoppingListSection');
@@ -341,14 +367,14 @@ class PlannerManager {
         document.body.removeChild(link);
         
         URL.revokeObjectURL(url);
-        NotificationManager.show('Meal plan exported successfully!');
+        alert('Meal plan exported successfully!');
     }
 
     // Public methods for external access
     saveMeal(day, recipe) {
         const mealId = `${day.toLowerCase()}_meal`;
         this.mealPlan[mealId] = recipe;
-        StorageManager.save('mealmatch_meal_plan', this.mealPlan);
+        localStorage.setItem('mealmatch_meal_plan', JSON.stringify(this.mealPlan));
         this.displayPlannerData();
     }
 

@@ -57,9 +57,10 @@ class FavoritesManager {
     }
 
     createFavoriteCard(favorite) {
+        const imageUrl = favorite.image ? favorite.image : 'https://via.placeholder.com/300x200?text=Recipe';
         return `
             <div class="favorite-item" data-favorite-id="${favorite.id}">
-                <img src="${favorite.image || 'https://via.placeholder.com/300x200?text=Recipe'}" alt="${favorite.title}">
+                <img src="${imageUrl}" alt="${favorite.title}">
                 <div class="favorite-content">
                     <h4>${favorite.title}</h4>
                     <p>Added ${new Date(favorite.addedAt).toLocaleDateString()}</p>
