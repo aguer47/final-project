@@ -354,20 +354,29 @@ class PlannerManager {
             totalMeals: Object.keys(this.mealPlan).length
         };
 
-        // Create download link
-        const dataStr = JSON.stringify(plannerData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `meal-planner-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        URL.revokeObjectURL(url);
-        alert('Meal plan exported successfully!');
+        try {
+            // Create download link
+            const dataStr = JSON.stringify(plannerData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `meal-planner-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up URL object after a short delay to ensure download starts
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            alert('Meal plan exported successfully!');
+        } catch (error) {
+            console.error('Error exporting planner:', error);
+            alert('Failed to export meal plan');
+        }
     }
 
     // Public methods for external access

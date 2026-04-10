@@ -98,20 +98,29 @@ class FavoritesManager {
             totalFavorites: Object.keys(this.favorites).length
         };
 
-        // Create download link
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `favorites-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        URL.revokeObjectURL(url);
-        NotificationManager.show('Favorites exported successfully!');
+        try {
+            // Create download link
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `favorites-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up URL object after a short delay to ensure download starts
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            NotificationManager.show('Favorites exported successfully!');
+        } catch (error) {
+            console.error('Error exporting favorites:', error);
+            NotificationManager.show('Failed to export favorites');
+        }
     }
 
     viewRecipe(recipeId) {

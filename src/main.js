@@ -8,6 +8,12 @@ class MealMatchApp {
         this.init();
     }
 
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     detectPage() {
         const path = window.location.pathname;
         
@@ -120,6 +126,20 @@ class MealMatchApp {
             console.log('window.plannerManager available:', !!window.plannerManager);
         }).catch(error => {
             console.error('Failed to load PlannerManager:', error);
+            // Show user-friendly error message
+            const container = document.querySelector('.plan-table');
+            if (container) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        <h3>Unable to load meal planner</h3>
+                        <p>Please refresh the page to try again.</p>
+                        <button onclick="location.reload()" class="btn btn-primary">Refresh Page</button>
+                    </div>
+                `;
+            }
+            // Disable planner buttons
+            const buttons = document.querySelectorAll('.planner-actions button');
+            buttons.forEach(btn => btn.disabled = true);
         });
     }
 
@@ -214,11 +234,22 @@ class MealMatchApp {
     }
 
     async runSearch(query) {
+        // Input validation
+        if (!query || typeof query !== 'string' || query.trim().length === 0) {
+            this.showNotification('Please enter a valid search term');
+            return;
+        }
+        
+        // Sanitize query
+        const sanitizedQuery = query.trim().replace(/[<>]/g, '').substring(0, 100);
+        
         const container = document.getElementById('recipesContainer');
+        if (!container) return;
+        
         container.innerHTML = 'Loading...';
 
         try {
-            const recipes = await searchRecipes(query);
+            const recipes = await searchRecipes(sanitizedQuery);
             
             if (!recipes || recipes.length === 0) {
                 container.innerHTML = '<div class="no-results">No recipes found</div>';
@@ -228,20 +259,31 @@ class MealMatchApp {
             container.innerHTML = '';
             
             recipes.forEach(recipe => {
+                // Validate recipe data
+                if (!recipe || !recipe.idMeal || !recipe.strMeal) {
+                    console.warn('Invalid recipe data:', recipe);
+                    return;
+                }
+                
                 const div = document.createElement('div');
                 div.className = 'recipe-card';
                 
+                // Sanitize recipe data for HTML
+                const safeTitle = this.escapeHtml(recipe.strMeal);
+                const safeImage = this.escapeHtml(recipe.strMealThumb || '');
+                const safeId = this.escapeHtml(recipe.idMeal);
+                
                 div.innerHTML = `
-                    <img src="${recipe.strMealThumb}" alt="${recipe.strMeal}" class="recipe-image" />
+                    <img src="${safeImage}" alt="${safeTitle}" class="recipe-image" />
                     <div class="recipe-content">
-                        <h3 class="recipe-title">${recipe.strMeal}</h3>
+                        <h3 class="recipe-title">${safeTitle}</h3>
                         <div class="recipe-info">
                             <span>Ready in 30 mins</span>
                             <span>Servings: 4</span>
                         </div>
                         <div class="recipe-actions">
-                            <button class="favorite-btn" data-recipe-id="${recipe.idMeal}">></button>
-                            <button class="view-recipe-btn" data-recipe-id="${recipe.idMeal}">View Recipe</button>
+                            <button class="favorite-btn" data-recipe-id="${safeId}">></button>
+                            <button class="view-recipe-btn" data-recipe-id="${safeId}">View Recipe</button>
                         </div>
                     </div>
                 `;
@@ -254,6 +296,12 @@ class MealMatchApp {
                     e.stopPropagation();
                     this.toggleFavorite(recipe.idMeal, favoriteBtn);
                 });
+                
+                // Set initial button state
+                const favorites = JSON.parse(localStorage.getItem('mealmatch_favorites') || '{}');
+                if (favorites[recipe.idMeal]) {
+                    favoriteBtn.classList.add('favorited');
+                }
 
                 viewBtn.addEventListener('click', () => {
                     window.location.href = `recipe.html?id=${recipe.idMeal}`;
@@ -264,6 +312,7 @@ class MealMatchApp {
         } catch (error) {
             container.innerHTML = '<div class="error">Error loading recipes</div>';
             console.error(error);
+            this.showNotification('Failed to load recipes');
         }
     }
 
@@ -284,15 +333,41 @@ class MealMatchApp {
         if (favorites[recipeId]) {
             delete favorites[recipeId];
             button.textContent = '>';
+            button.classList.remove('favorited');
             this.showNotification('Removed from favorites');
         } else {
+            // Safely get recipe data from DOM
+            const recipeElement = document.querySelector(`[data-recipe-id="${recipeId}"]`);
+            if (!recipeElement) {
+                console.error('Recipe element not found:', recipeId);
+                this.showNotification('Error adding to favorites');
+                return;
+            }
+            
+            const recipeCard = recipeElement.closest('.recipe-card');
+            if (!recipeCard) {
+                console.error('Recipe card not found for:', recipeId);
+                this.showNotification('Error adding to favorites');
+                return;
+            }
+            
+            const titleElement = recipeCard.querySelector('.recipe-title');
+            const imageElement = recipeCard.querySelector('.recipe-image');
+            
+            if (!titleElement || !imageElement) {
+                console.error('Recipe elements not found for:', recipeId);
+                this.showNotification('Error adding to favorites');
+                return;
+            }
+            
             favorites[recipeId] = {
                 id: recipeId,
-                title: document.querySelector(`[data-recipe-id="${recipeId}"]`).closest('.recipe-card').querySelector('.recipe-title').textContent,
-                image: document.querySelector(`[data-recipe-id="${recipeId}"]`).closest('.recipe-card').querySelector('.recipe-image').src,
+                title: titleElement.textContent.trim(),
+                image: imageElement.src,
                 addedAt: Date.now()
             };
             button.textContent = '>';
+            button.classList.add('favorited');
             this.showNotification('Added to favorites');
         }
         
@@ -321,15 +396,25 @@ class MealMatchApp {
         const container = document.getElementById('recipeDetail');
         if (!container) return;
 
+        // Sanitize recipe data
+        const safeTitle = this.escapeHtml(recipe.strMeal || 'Unknown Recipe');
+        const safeCategory = this.escapeHtml(recipe.strCategory || 'N/A');
+        const safeArea = this.escapeHtml(recipe.strArea || 'N/A');
+        const safeInstructions = this.escapeHtml(recipe.strInstructions || 'No instructions available');
+        const safeImage = this.escapeHtml(recipe.strMealThumb || '');
+
+        // Generate ingredients list dynamically
+        const ingredients = this.generateIngredientsList(recipe);
+
         const html = `
             <div class="recipe-detail">
                 <div class="recipe-header">
-                    <img src="${recipe.strMealThumb}" alt="${recipe.strMeal}" class="recipe-detail-image" />
+                    <img src="${safeImage}" alt="${safeTitle}" class="recipe-detail-image" />
                     <div class="recipe-info">
-                        <h1>${recipe.strMeal}</h1>
+                        <h1>${safeTitle}</h1>
                         <div class="recipe-meta">
-                            <span>Category: ${recipe.strCategory || 'N/A'}</span>
-                            <span>Area: ${recipe.strArea || 'N/A'}</span>
+                            <span>Category: ${safeCategory}</span>
+                            <span>Area: ${safeArea}</span>
                         </div>
                     </div>
                 </div>
@@ -338,23 +423,37 @@ class MealMatchApp {
                     <div class="ingredients-section">
                         <h3>Ingredients</h3>
                         <ul class="ingredients-list">
-                            ${recipe.strIngredient1 ? `<li>${recipe.strIngredient1}</li>` : ''}
-                            ${recipe.strIngredient2 ? `<li>${recipe.strIngredient2}</li>` : ''}
-                            ${recipe.strIngredient3 ? `<li>${recipe.strIngredient3}</li>` : ''}
-                            ${recipe.strIngredient4 ? `<li>${recipe.strIngredient4}</li>` : ''}
-                            ${recipe.strIngredient5 ? `<li>${recipe.strIngredient5}</li>` : ''}
+                            ${ingredients}
                         </ul>
                     </div>
                     
                     <div class="instructions-section">
                         <h3>Instructions</h3>
-                        <div class="instructions-text">${recipe.strInstructions}</div>
+                        <div class="instructions-text">${safeInstructions}</div>
                     </div>
                 </div>
             </div>
         `;
 
         container.innerHTML = html;
+    }
+
+    generateIngredientsList(recipe) {
+        const ingredients = [];
+        
+        // TheMealDB API uses strIngredient1, strIngredient2, etc.
+        for (let i = 1; i <= 20; i++) {
+            const ingredient = recipe[`strIngredient${i}`];
+            const measure = recipe[`strMeasure${i}`];
+            
+            if (ingredient && ingredient.trim() !== '') {
+                const safeIngredient = this.escapeHtml(ingredient.trim());
+                const safeMeasure = measure ? this.escapeHtml(measure.trim()) : '';
+                ingredients.push(`<li>${safeMeasure} ${safeIngredient}</li>`);
+            }
+        }
+        
+        return ingredients.length > 0 ? ingredients.join('') : '<li>No ingredients listed</li>';
     }
 
     showRecipeError(message) {
