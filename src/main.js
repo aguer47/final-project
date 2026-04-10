@@ -384,11 +384,18 @@ class MealMatchApp {
         }
 
         try {
+            console.log('Loading recipe with ID:', recipeId);
             const recipe = await getRecipeById(recipeId);
+            
+            if (!recipe) {
+                this.showRecipeError('Recipe not found. The recipe ID may not exist in our database.');
+                return;
+            }
+            
             this.renderRecipeDetail(recipe);
         } catch (error) {
             console.error('Error loading recipe:', error);
-            this.showRecipeError('Failed to load recipe details');
+            this.showRecipeError('Failed to load recipe details. Please try again later.');
         }
     }
 
@@ -459,7 +466,17 @@ class MealMatchApp {
     showRecipeError(message) {
         const container = document.getElementById('recipeDetail');
         if (container) {
-            container.innerHTML = `<div class="error-message">${message}</div>`;
+            container.innerHTML = `
+                <div class="error-message">
+                    <div class="error-icon">!</div>
+                    <h3>Recipe Not Available</h3>
+                    <p>${message}</p>
+                    <div class="error-actions">
+                        <a href="/" class="btn btn-primary">Back to Search</a>
+                        <a href="/favorites.html" class="btn btn-outline">View Favorites</a>
+                    </div>
+                </div>
+            `;
         }
     }
 }
