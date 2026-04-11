@@ -9,11 +9,13 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         planner: resolve(__dirname, 'planner.html'),
-        favorites: resolve(__dirname, 'favorites.html')
+        favorites: resolve(__dirname, 'favorites.html'),
+        recipe: resolve(__dirname, 'recipe.html')
       }
     }
   },
   server: {
-    port: 5173
+    port: 5173,
+    host: true
   }
 });

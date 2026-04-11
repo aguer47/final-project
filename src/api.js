@@ -31,7 +31,7 @@ export async function searchRecipes(query) {
 
 
 
-// 📖 Get recipe details
+// Get recipe details
 
 export async function getRecipeById(id) {
   try {
