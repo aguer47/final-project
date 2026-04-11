@@ -2,7 +2,7 @@ const BASE_URL = "https://www.themealdb.com/api/json/v1/1";
 
 
 
-// 🔍 Search recipes
+//  Search recipes
 
 export async function searchRecipes(query) {
     try {
