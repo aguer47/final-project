@@ -1,13 +1,14 @@
 // Majok Aguer - mealmatch
 
 import { searchRecipes } from './api.js';
+import { NotificationManager } from './utils.js';
 
 class PlannerManager {
     constructor() {
         this.mealPlan = JSON.parse(localStorage.getItem('mealmatch_meal_plan') || '{}');
         this.daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         this.mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
-        
+
         this.init();
     }
 
@@ -15,14 +16,36 @@ class PlannerManager {
         this.displayPlannerData();
         this.setupEventListeners();
         this.setupAddButtons();
+        // Bind event listener to instance
+    this.handleModalClick = (e) => {
+        // Remove option handler
+        if (e.target.classList.contains('remove-option')) {
+            e.stopPropagation();
+            const id = e.target.dataset.id;
+            e.target.closest('.recipe-option')?.remove();
+            return;
+        }
+
+        // Select recipe
+        if (e.target.closest('.recipe-option')) {
+            const el = e.target.closest('.recipe-option');
+            this.selectRecipe(
+                el.dataset.id,
+                el.dataset.title,
+                el.dataset.image
+            );
+        }
+    };
+    
+    document.addEventListener('click', this.handleModalClick);
     }
 
     displayPlannerData() {
         const container = document.querySelector('.weekly-plan .plan-table');
         if (!container) return;
 
-        // Generate days of week rows
         const daysHTML = this.daysOfWeek.map(day => this.createDayRow(day)).join('');
+
         container.innerHTML = `
             <div class="table-header">
                 <div class="day-cell">Day</div>
@@ -31,7 +54,6 @@ class PlannerManager {
             ${daysHTML}
         `;
 
-        // Populate existing meals
         this.populatePlannerData();
     }
 
@@ -51,9 +73,9 @@ class PlannerManager {
 
         return `
             <div class="plan-cell">
-                <div class="meal-slot ${isFilled ? 'filled' : ''}" 
-                     data-day="${day}" 
-                     data-meal="${meal}" 
+                <div class="meal-slot ${isFilled ? 'filled' : ''}"
+                     data-day="${day}"
+                     data-meal="${meal}"
                      data-meal-id="${mealId}">
                     ${isFilled ? existingMeal.title : '+ Add Meal'}
                 </div>
@@ -64,70 +86,70 @@ class PlannerManager {
     populatePlannerData() {
         Object.keys(this.mealPlan).forEach(mealId => {
             const mealData = this.mealPlan[mealId];
-            if (mealData && mealData.title) {
-                const slot = document.querySelector(`[data-meal-id="${mealId}"]`);
-                if (slot) {
-                    slot.textContent = mealData.title;
-                    slot.classList.add('filled');
-                }
+            const slot = document.querySelector(`[data-meal-id="${mealId}"]`);
+
+            if (slot && mealData?.title) {
+                slot.textContent = mealData.title;
+                slot.classList.add('filled');
             }
         });
     }
 
     setupEventListeners() {
-        // Clear plan button
         const clearBtn = document.getElementById('clearPlannerBtn');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => this.clearPlan());
-        }
+        if (clearBtn) clearBtn.addEventListener('click', () => this.clearPlan());
 
-        // Generate shopping list button
         const shoppingListBtn = document.getElementById('generateListBtn');
-        if (shoppingListBtn) {
-            shoppingListBtn.addEventListener('click', () => this.generateShoppingList());
-        }
+        if (shoppingListBtn) shoppingListBtn.addEventListener('click', () => this.generateShoppingList());
 
-        // Export planner button
         const exportBtn = document.getElementById('exportPlannerBtn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.exportPlanner());
-        }
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportPlanner());
     }
 
     setupAddButtons() {
-        // Setup click handlers for meal slots
         setTimeout(() => {
             document.querySelectorAll('.meal-slot').forEach(slot => {
                 slot.addEventListener('click', (e) => {
-                    const day = e.target.dataset.day;
-                    const meal = e.target.dataset.meal;
-                    console.log('Meal slot clicked:', day, meal);
+                    const day = e.currentTarget.dataset.day;
+                    const meal = e.currentTarget.dataset.meal;
+
                     this.openRecipeSelector(day, meal);
                 });
             });
-        }, 100);
+        }, 200);
     }
 
     openRecipeSelector(day, meal) {
-        console.log('Opening recipe selector for:', day, meal);
         this.currentDay = day;
         this.currentMeal = meal;
         this.showRecipeModal();
     }
 
     showRecipeModal() {
-        const modal = document.getElementById('recipeModal');
-        if (!modal) {
-            this.createRecipeModal();
-        }
+    let modal = document.getElementById('recipeModal');
 
-        const modalElement = document.getElementById('recipeModal');
-        
-        // Load recent favorites or popular recipes
-        this.loadModalRecipes();
-        
-        modalElement.style.display = 'block';
+    if (!modal) {
+        this.createRecipeModal();
     }
+
+    document.getElementById('recipeModal').style.display = 'block';
+    this.loadModalRecipes();
+    // Ensure event listeners are attached to remove buttons
+    this.attachRemoveButtonListeners();
+}
+
+attachRemoveButtonListeners() {
+    const removeButtons = document.querySelectorAll('.remove-option');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const recipeOption = e.target.closest('.recipe-option');
+            if (recipeOption) {
+                recipeOption.remove();
+            }
+        });
+    });
+}
 
     createRecipeModal() {
         const modalHTML = `
@@ -137,204 +159,185 @@ class PlannerManager {
                         <h3>Select Recipe for ${this.currentDay} ${this.currentMeal}</h3>
                         <button class="modal-close" onclick="window.plannerManager.closeRecipeModal()">&times;</button>
                     </div>
+
                     <div class="modal-body">
                         <div class="search-section">
                             <input type="text" id="modalSearchInput" placeholder="Search recipes..." class="search-input">
-                            <button class="btn btn-primary" onclick="window.plannerManager.searchModalRecipes()">Search</button>
+                            <button class="btn btn-primary" onclick="window.plannerManager.searchModalRecipes()">
+                                Search
+                            </button>
                         </div>
+
                         <div class="modal-recipes" id="modalRecipes">
-                            <div class="loading-placeholder">
-                                <div class="spinner"></div>
-                                <p>Loading recipes...</p>
-                            </div>
+                            <p>Loading recipes...</p>
                         </div>
                     </div>
                 </div>
             </div>
         `;
+
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
     async loadModalRecipes() {
-        try {
-            // Load favorites first
-            const favorites = JSON.parse(localStorage.getItem('mealmatch_favorites') || '{}');
-            const favoriteRecipes = Object.values(favorites);
-            
-            if (favoriteRecipes.length > 0) {
-                this.displayModalRecipes(favoriteRecipes);
-            } else {
-                // Load some popular recipes if no favorites
-                await this.loadPopularRecipes();
-            }
-        } catch (error) {
-            console.error('Error loading modal recipes:', error);
+        const favorites = JSON.parse(localStorage.getItem('mealmatch_favorites') || '{}');
+        const favArray = Object.values(favorites);
+
+        if (favArray.length > 0) {
+            this.displayModalRecipes(favArray);
+        } else {
             await this.loadPopularRecipes();
         }
     }
 
     async loadPopularRecipes() {
-        try {
-            console.log('Loading popular recipes with search term: chicken');
-            const results = await searchRecipes('chicken');
-            console.log('Popular recipes results:', results);
-            this.displayModalRecipes(results.slice(0, 6));
-        } catch (error) {
-            console.error('Error loading popular recipes:', error);
-            this.displayModalRecipes([]);
-        }
+    try {
+        const results = await searchRecipes('chicken');
+        const meals = this.normalizeRecipes(results);
+
+        this.displayModalRecipes(meals.slice(0, 6));
+    } catch (error) {
+        console.error(error);
+        this.displayModalRecipes([]);
+    }
+}
+
+normalizeRecipes(recipes) {
+    if (!Array.isArray(recipes)) return [];
+    
+    return recipes.filter(recipe => 
+        recipe && 
+        typeof recipe === 'object' && 
+        recipe.idMeal && 
+        recipe.strMeal
+    ).map(recipe => ({
+        ...recipe,
+        idMeal: recipe.idMeal,
+        strMeal: recipe.strMeal,
+        strMealThumb: recipe.strMealThumb || ''
+    }));
+}
+
+async searchModalRecipes() {
+    const input = document.getElementById('modalSearchInput');
+    const query = input?.value?.trim();
+
+    if (!query) {
+        NotificationManager.show('Enter a search term');
+        return;
     }
 
-    async searchModalRecipes() {
-        const searchInput = document.getElementById('modalSearchInput');
-        const query = searchInput ? searchInput.value.trim() : '';
-        
-        console.log('Planner search query:', query);
-        
-        if (!query) {
-            alert('Please enter a search term');
-            return;
-        }
+    try {
+        const results = await searchRecipes(query);
+        const meals = this.normalizeRecipes(results);
 
-        try {
-            console.log('Calling searchRecipes with query:', query);
-            const results = await searchRecipes(query);
-            console.log('Search results:', results);
-            
-            if (!results || results.length === 0) {
-                this.displayModalRecipes([]);
-                return;
-            }
-            
-            this.displayModalRecipes(results.slice(0, 6));
-        } catch (error) {
-            console.error('Error searching recipes:', error);
-            alert('Failed to search recipes: ' + error.message);
-        }
+        this.displayModalRecipes(meals.slice(0, 6));
+    } catch (error) {
+        console.error(error);
+        NotificationManager.show('Search failed');
     }
+}
 
     displayModalRecipes(recipes) {
-        const container = document.getElementById('modalRecipes');
-        console.log('displayModalRecipes called with:', recipes);
-        console.log('Container found:', !!container);
-        
-        if (!container) return;
+    const container = document.getElementById('modalRecipes');
+    if (!container) return;
 
-        if (!recipes || recipes.length === 0) {
-            console.log('No recipes to display');
-            container.innerHTML = `
-                <div class="loading-placeholder">
-                    <p>No recipes found. Try searching for something else.</p>
-                </div>
-            `;
-            return;
-        }
+    const safe = this.normalizeRecipes(recipes);
 
-        console.log('Processing', recipes.length, 'recipes');
-        const recipesHTML = recipes.map(recipe => {
-            console.log('Processing recipe:', recipe);
-            return `
-                <div class="recipe-option" data-recipe-id="${recipe.idMeal}" data-recipe-title="${recipe.strMeal.replace(/'/g, "\\'")}" data-recipe-image="${recipe.strMealThumb || ''}">
-                    <img src="${recipe.strMealThumb || 'https://via.placeholder.com/100x100?text=Recipe'}" alt="${recipe.strMeal}">
-                    <div class="recipe-info">
-                        <h4>${recipe.strMeal}</h4>
-                        <p>Ready in 30 mins</p>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        console.log('Setting container HTML with', recipes.length, 'recipes');
-        container.innerHTML = recipesHTML;
-
-        // Add click event listeners to recipe options
-        container.querySelectorAll('.recipe-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const recipeId = option.dataset.recipeId;
-                const recipeTitle = option.dataset.recipeTitle;
-                const recipeImage = option.dataset.recipeImage;
-                this.selectRecipe(recipeId, recipeTitle, recipeImage);
-            });
-        });
+    if (safe.length === 0) {
+        container.innerHTML = `<p>No recipes found</p>`;
+        return;
     }
 
-    selectRecipe(recipeId, recipeTitle, recipeImage) {
+    container.innerHTML = safe.map(recipe => {
+        if (!recipe.idMeal || !recipe.strMeal) return '';
+
+        return `
+            <div class="recipe-option"
+                data-id="${recipe.idMeal}"
+                data-title="${recipe.strMeal}"
+                data-image="${recipe.strMealThumb || ''}">
+                
+                <img src="${recipe.strMealThumb || ''}" width="80">
+                <div>
+                    <h4>${recipe.strMeal}</h4>
+                </div>
+                <button class="remove-option" data-id="${recipe.idMeal}" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Remove</button>
+            </div>
+        `;
+    }).join('');
+    
+    // Attach remove button listeners after rendering
+    this.attachRemoveButtonListeners();
+}
+    selectRecipe(id, title, image) {
         const mealId = `${this.currentDay.toLowerCase()}_${this.currentMeal.toLowerCase()}`;
-        
-        // Save to meal plan
+
         this.mealPlan[mealId] = {
-            id: recipeId,
-            title: recipeTitle,
-            image: recipeImage,
-            day: this.currentDay,
-            meal: this.currentMeal,
+            id,
+            title,
+            image,
             addedAt: Date.now()
         };
 
-        // Save to storage
         localStorage.setItem('mealmatch_meal_plan', JSON.stringify(this.mealPlan));
 
-        // Update UI
         const slot = document.querySelector(`[data-meal-id="${mealId}"]`);
         if (slot) {
-            slot.textContent = recipeTitle;
+            slot.textContent = title;
             slot.classList.add('filled');
         }
 
-        // Close modal
         this.closeRecipeModal();
 
-        NotificationManager.show(`Added ${recipeTitle} to ${this.currentDay} ${this.currentMeal}`);
+        NotificationManager.show(`Added ${title}`);
     }
 
     closeRecipeModal() {
         const modal = document.getElementById('recipeModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
+        if (modal) modal.style.display = 'none';
     }
 
     clearPlan() {
-        if (confirm('Are you sure you want to clear the entire meal plan?')) {
-            this.mealPlan = {};
-            localStorage.setItem('mealmatch_meal_plan', JSON.stringify(this.mealPlan));
-            this.displayPlannerData();
-            alert('Meal plan cleared');
-        }
+        if (!confirm('Clear meal plan?')) return;
+
+        this.mealPlan = {};
+        localStorage.removeItem('mealmatch_meal_plan');
+        this.displayPlannerData();
+
+        NotificationManager.show('Meal plan cleared');
     }
 
     generateShoppingList() {
+        const shoppingList = [];
         const allIngredients = new Set();
-        const ingredientList = [];
 
         Object.values(this.mealPlan).forEach(meal => {
-            if (meal && meal.id) {
-                // Add recipe ingredients to shopping list
-                ingredientList.push({
+            if (meal && meal.title) {
+                shoppingList.push({
                     recipe: meal.title,
-                    ingredients: ['Ingredient 1', 'Ingredient 2', 'Ingredient 3'] // Placeholder - would come from API
+                    ingredients: ['Ingredient 1', 'Ingredient 2', 'Ingredient 3'] // Placeholder ingredients
                 });
             }
         });
 
-        // Save shopping list
-        localStorage.setItem('mealmatch_shopping_list', JSON.stringify(ingredientList));
+        localStorage.setItem('mealmatch_shopping_list', JSON.stringify(shoppingList));
         
-        alert('Shopping list generated!');
+        NotificationManager.show('Shopping list generated!');
         
-        // Show shopping list section
+        // Show shopping list section if it exists
         const shoppingSection = document.getElementById('shoppingListSection');
         if (shoppingSection) {
             shoppingSection.style.display = 'block';
-            this.displayShoppingList(ingredientList);
+            this.displayShoppingList(shoppingList);
         }
     }
 
-    displayShoppingList(ingredientList) {
+    displayShoppingList(shoppingList) {
         const container = document.getElementById('shoppingListContainer');
         if (!container) return;
 
-        const listHTML = ingredientList.map((item, index) => `
+        const listHTML = shoppingList.map((item, index) => `
             <div class="shopping-list-item">
                 <div class="item-checkbox">
                     <input type="checkbox" id="item-${index}">
@@ -348,49 +351,26 @@ class PlannerManager {
     }
 
     exportPlanner() {
-        const plannerData = {
-            weekPlan: this.mealPlan,
-            exportDate: new Date().toISOString(),
-            totalMeals: Object.keys(this.mealPlan).length
+        const data = {
+            plan: this.mealPlan,
+            date: new Date().toISOString()
         };
 
-        try {
-            // Create download link
-            const dataStr = JSON.stringify(plannerData, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `meal-planner-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up URL object after a short delay to ensure download starts
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 100);
-            
-            alert('Meal plan exported successfully!');
-        } catch (error) {
-            console.error('Error exporting planner:', error);
-            alert('Failed to export meal plan');
-        }
-    }
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+            type: 'application/json'
+        });
 
-    // Public methods for external access
-    saveMeal(day, recipe) {
-        const mealId = `${day.toLowerCase()}_meal`;
-        this.mealPlan[mealId] = recipe;
-        localStorage.setItem('mealmatch_meal_plan', JSON.stringify(this.mealPlan));
-        this.displayPlannerData();
-    }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
 
-    getMealPlan() {
-        return this.mealPlan;
+        a.href = url;
+        a.download = 'meal-plan.json';
+        a.click();
+
+        URL.revokeObjectURL(url);
+
+        NotificationManager.show('Exported!');
     }
 }
 
-// Export for use in other files
 export { PlannerManager };
