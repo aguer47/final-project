@@ -314,23 +314,23 @@ async runSearch(query) {
     }
 
     toggleFavorite(recipe, button) {
-        const favorites = JSON.parse(localStorage.getItem('mealmatch_favorites') || '{}');
+    const favorites = JSON.parse(localStorage.getItem('mealmatch_favorites') || '{}');
 
-        if (favorites[recipe.idMeal]) {
-            delete favorites[recipe.idMeal];
-            button.textContent = '></button>';
-        } else {
-            favorites[recipe.idMeal] = {
-                id: recipe.idMeal,
-                title: recipe.strMeal,
-                image: recipe.strMealThumb,
-                addedAt: Date.now()
-            };
-            button.textContent = '></button>';
-        }
-
-        localStorage.setItem('mealmatch_favorites', JSON.stringify(favorites));
+    if (favorites[recipe.idMeal]) {
+        delete favorites[recipe.idMeal];
+        button.textContent = '🤍';
+    } else {
+        favorites[recipe.idMeal] = {
+            id: recipe.idMeal,
+            title: recipe.strMeal,
+            image: recipe.strMealThumb,
+            addedAt: Date.now()
+        };
+        button.textContent = '❤️';
     }
+
+    localStorage.setItem('mealmatch_favorites', JSON.stringify(favorites));
+}
 
     async loadRecipeDetail() {
         const params = new URLSearchParams(window.location.search);
